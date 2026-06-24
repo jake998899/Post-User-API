@@ -24,6 +24,4 @@ A battle-tested FastAPI project with enterprise-grade features:
 
 ---
 
-> 🏗️ *Work in progress - built with passion, powered by FastAPI*
-
-🚀 *Star this repo to follow my journey!*
+> 🏗️ *Work in progress 
