@@ -15,4 +15,4 @@ async def get_db():
     async with SessionLocal() as sesstion:
         yield sesstion
 
-DB_sesstion = Annotated[AsyncSession, Depends(get_db)]
+DB_session = Annotated[AsyncSession, Depends(get_db)]
