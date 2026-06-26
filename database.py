@@ -4,7 +4,7 @@ from config import setting
 from fastapi import Depends
 from typing import Annotated
 
-engine = create_async_engine(setting.url, echo=True, future=True)
+engine = create_async_engine(setting.url_database, echo=True, future=True)
 
 SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

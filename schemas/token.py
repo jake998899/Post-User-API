@@ -14,7 +14,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/login')
 
 def create_access_token(user_data: dict):
     to_encode = user_data.copy()
-    to_encode.update({'exp': datetime.now(timezone.utc) + timedelta(minutes=int(setting.exp_time))})
+    to_encode.update({'exp': datetime.now(timezone.utc) + timedelta(minutes=int(setting.expire_token_time))})
     token = jwt.encode(to_encode, key=setting.SECRET_KEY, algorithm=setting.ALGORITHM)
     return token
 
@@ -44,7 +44,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: DB
 
 def create_token_email(email_dict: dict):
     to_encode = email_dict.copy()
-    to_encode.update({"exp": datetime.now(timezone.utc) + timedelta(hours=int(setting.resend_exp))})
+    to_encode.update({"exp": datetime.now(timezone.utc) + timedelta(hours=int(setting.RESEND_KEY_EXPIRE_TIME))})
     token = jwt.encode(to_encode, key=setting.SECRET_KEY, algorithm=setting.ALGORITHM)
     return token
 
@@ -52,7 +52,7 @@ def create_token_email(email_dict: dict):
 
 async def send_email(email: str, reset_token: str, username: str):
 
-    resend.api_key = setting.resend_api_key
+    resend.api_key = setting.RESEND_API_KEY
 
     reset_link = f"https://yourapp.com/reset-password?token={reset_token}"
 

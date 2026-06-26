@@ -11,6 +11,6 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(250), unique=True, nullable=False)
     role: Mapped[str] = mapped_column(default='user')
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    password: Mapped[str] = mapped_column(String(250))
+    password: Mapped[str] = mapped_column(String(250), nullable=False)
 
     # Make relationship with posts later
