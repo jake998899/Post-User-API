@@ -1,10 +1,13 @@
-from fastapi import APIRouter, status, Depends, BackgroundTasks
-from database import DB_session
-from schemas.pydantic_models import *
-from schemas.hashing_file import *
-from schemas.crud import *
-from schemas.HTTPErrors import *
-from schemas.token import *
+from fastapi import APIRouter, status, Depends, BackgroundTasks, HTTPException
+from core.database import DB_session
+from core.security import (
+    hash_password, verify_password, create_access_token,
+    create_token_email, verify_email_token
+)
+from services.crud import user_exists_service, fetch_user_email
+from services.email import send_email
+from core.HTTPErrors import ExceptionError, UnauthorizedError, NotFoundError
+from schemas.auth import UserReq, UserReqRes, Token, ForgotPasswordEmail, ResetPasswordReq
 from models import User
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
@@ -19,13 +22,13 @@ async def create_user(db: DB_session, user_req: UserReq):
         if user_exists:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="username alreadt exists",
+                detail="username already exists",
             )
 
         email_exists = await fetch_user_email(user_req.email, db)
         if email_exists:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="email alreadt exists"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="email already exists"
             )
 
         user_data = user_req.model_dump()
@@ -52,32 +55,32 @@ async def login_user(
     try:
         user = await user_exists_service(form_data.username, db)
         if not user:
-            raise UnAuthorizesError(msg="username or password is incorrect!")
+            raise UnauthorizedError(msg="username or password is incorrect!")
 
         if not verify_password(form_data.password, user.password):
-            raise UnAuthorizesError(msg="username or password is incorrect!")
+            raise UnauthorizedError(msg="username or password is incorrect!")
 
         token = create_access_token(
             {"sub": user.username, "id": user.id, "role": user.role}
         )
         return {"access_token": token, "token_type": "bearer"}
 
-    except UnAuthorizesError:
+    except UnauthorizedError:
         raise
     except Exception as ex:
         raise ExceptionError(msg=str(ex))
 
 
-@router.get("/forgot-password", status_code=status.HTTP_200_OK)
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(
     db: DB_session,
     background_tasks: BackgroundTasks,
-    email_data: ForgotPasswordEmail = Depends(),
+    email_data: ForgotPasswordEmail,
 ):
     try:
         existing_email = await fetch_user_email(email=email_data.email, db=db)
         if not existing_email:
-            raise UnAuthorizesError(msg="Invalid Creadentials")
+            raise UnauthorizedError(msg="Invalid Credentials")
 
         email_token = create_token_email({"email": existing_email.email})
         background_tasks.add_task(
@@ -85,17 +88,17 @@ async def forgot_password(
         )
 
         return {
-            "msg": f"An email has been send to {existing_email.email}. The will expire in 1 hours"
+            "msg": f"An email has been sent to {existing_email.email}. The link will expire in 1 hour"
         }
 
-    except UnAuthorizesError:
+    except UnauthorizedError:
         raise
     except Exception as ex:
         raise ExceptionError(msg=str(ex))
 
 
 @router.put(
-    "/reset_password", status_code=status.HTTP_200_OK, response_model=UserReqRes
+    "/reset-password", status_code=status.HTTP_200_OK, response_model=UserReqRes
 )
 async def reset_password(db: DB_session, token: str, reset_req: ResetPasswordReq):
     try:
@@ -104,7 +107,7 @@ async def reset_password(db: DB_session, token: str, reset_req: ResetPasswordReq
         user = await fetch_user_email(email=email, db=db)
 
         if not user:
-            raise NotFoundError(msg="Invalid Creadentials")
+            raise NotFoundError(msg="Invalid Credentials")
 
         user.password = hash_password(reset_req.password)
 

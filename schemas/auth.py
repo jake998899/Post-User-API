@@ -6,7 +6,7 @@ class UserReq(BaseModel):
     username: str = Field(..., min_length=3, max_length=250, pattern=r'^[a-zA-Z\d\!\$\%]+$', examples=['Ali$Pro123'])
     email: EmailStr = Field(..., min_length=1, max_length=250, examples=['example@gmail.com'])
     role: Literal['user', 'admin'] = Field(...)
-    password: str = Field(...)
+    password: str = Field(..., min_length=6, examples=['test123'])
 
     model_config = ConfigDict(str_strip_whitespace=True, str_to_lower=True)
 
@@ -27,3 +27,10 @@ class ForgotPasswordEmail(BaseModel):
 
 class ResetPasswordReq(BaseModel):
     password: str = Field(..., min_length=6, examples=['test123'])
+
+class UserPatchReq(BaseModel):
+    username: str | None = Field(None, min_length=3, max_length=250, pattern=r'^[a-zA-Z\d\!\$\%]+$', examples=['Ali$Pro123'])
+    email: EmailStr | None = Field(None, min_length=1, max_length=250, examples=['example@gmail.com'])
+
+class UserPatchRes(UserReqRes):
+    pass

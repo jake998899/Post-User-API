@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-from config import setting
+from core.config import setting
 from fastapi import Depends
 from typing import Annotated
 
@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
     pass
 
 async def get_db():
-    async with SessionLocal() as sesstion:
-        yield sesstion
+    async with SessionLocal() as session:
+        yield session
 
 DB_session = Annotated[AsyncSession, Depends(get_db)]

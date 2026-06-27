@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from database import Base
+from core.database import Base
 from sqlalchemy import String, func
 
 class User(Base):
